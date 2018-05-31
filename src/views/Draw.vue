@@ -126,7 +126,7 @@ export default {
       let touch = event.touches[0];
       const x = touch.pageX - this._canX;
       const y = touch.pageY - this._canY;
-      this.draw.drawTo(x, y);
+      return this.draw.drawTo(x, y);
     },
     onMouseUp() {
       return this.draw.end();
@@ -137,7 +137,7 @@ export default {
     selectLineWidth(width) {
       console.log("selectLineWidth", width);
       this.lineWidth = width;
-      this.draw.setLineWidth(width);
+      return this.draw.setLineWidth(width);
     }
   }
 };
