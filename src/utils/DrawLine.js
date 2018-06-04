@@ -25,6 +25,7 @@ class Draw {
   }
 
   setBrushColor(color) {
+    this.strokeStyle = color;
     this.context.strokeStyle = color;
   }
 
@@ -32,7 +33,7 @@ class Draw {
     return x >= 0 && x <= this._canWidth && y >= 0 && y <= this._canHeight
   }
 
-  start(x, y) {
+  _start(x, y) {
     console.log('start', x, y)
     if (!this.isPointInCanvasArea(x, y)) return;
     this.drawing = true;
@@ -43,6 +44,12 @@ class Draw {
     this.context.stroke();
     this.lastX = x;
     this.lastY = y;
+  }
+
+  start(x, y) {
+    this.context.lineWidth = this.lineWidth
+    this.context.strokeStyle = this.strokeStyle
+    this._start(x, y)
   }
 
   drawTo(x, y) {
@@ -65,6 +72,25 @@ class Draw {
     console.log('end')
     this.drawing = false;
   }
+
+  drawStoke(stroke) {
+    if (stroke.length < 4) return
+    let lineWidth = stroke[0]
+    let strokeStyle = stroke[1]
+
+    this.context.lineWidth = lineWidth
+    this.context.strokeStyle = strokeStyle
+
+    this._start(stroke[2], stroke[3])
+
+    let i = 4
+    while (i < stroke.length) {
+      this.drawTo(stroke[i], stroke[i + 1])
+      i += 2
+    }
+    this.end()
+  }
+
 }
 
 export default Draw

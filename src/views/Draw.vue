@@ -15,6 +15,9 @@
 
     <div class="ctl-row">
       <button @click="clear">clear</button>
+      <button @click="undo">undo</button>
+      <button @click="redo">redo</button>
+      <button @click="save">save</button>
     </div>
 
     <div class="ctl-row">
@@ -32,23 +35,22 @@
 </template>
 
 <script>
-import DrawLine from "@/utils/DrawLine";
-import { getOffset } from "@/utils/util";
+import { getOffset, saveAsPNG } from "@/utils/util";
 import { ColorPicker } from "element-ui";
+
+import DrawLine from "@/utils/DrawLine";
+import DrawHistory from "@/utils/DrawHistory";
 
 export default {
   data() {
     return {
       viewportContentBackup: "",
-      context: null,
-      draw: null,
       canvasWidth: 340,
       canvasHeight: 400,
       _ptOffset: 0.5,
       _canX: null,
       _canY: null,
       lineWidths: [2, 4, 6, 10, 18],
-      lineWidth: 2,
       predefineColors: [
         "#000000",
         "#ffffff",
@@ -67,8 +69,19 @@ export default {
         "#ffc4d6",
         "#ff00b2"
       ],
+
+      context: null,
+      draw: null,
+      drawHistory: null,
+      lineWidth: 2,
       brushColor: "#000"
     };
+  },
+  computed: {
+    imgData() {
+      let canvas = document.getElementById("canvas");
+      console.log(canvas);
+    }
   },
   components: {
     [ColorPicker.name]: ColorPicker
@@ -86,6 +99,7 @@ export default {
     brushColor(val, oldVal) {
       if (typeof val !== "string") return;
       this.draw.setBrushColor(val);
+      this.drawHistory.setBrushColor(val);
     }
   },
   mounted() {
@@ -101,43 +115,88 @@ export default {
     this._canY = getOffset(canvas).top;
     console.log("offset", this._canX, this._canY);
     this.draw = new DrawLine("#canvas");
+    this.drawHistory = new DrawHistory();
+    this.clearCanvas();
   },
   methods: {
     clear() {
-      return this.context.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      console.log("clear");
+      this.clearCanvas();
+      this.clearHistory();
+    },
+    clearCanvas() {
+      this.context.fillStyle = "white";
+      this.context.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    },
+    clearHistory() {
+      this.drawHistory.clear();
+    },
+    undo() {
+      console.log("undo");
+      this.drawHistory.undo();
+      this.clearCanvas();
+      this.drawHistory.history.forEach(stroke => {
+        this.draw.drawStoke(stroke);
+      });
+    },
+    redo() {
+      console.log("redo");
+      this.drawHistory.redo();
+      this.clearCanvas();
+      this.drawHistory.history.forEach(stroke => {
+        this.draw.drawStoke(stroke);
+      });
+    },
+    save() {
+      console.log("save");
+      var canvas = document.getElementById("canvas");
+      // Canvas2Image.saveAsPNG(canvas, this.canvasWidth, this.canvasHeight);
+      var img = canvas.toDataURL("image/png");
+      saveAsPNG("download.png", img);
     },
     onMouseDown(evt) {
       evt.preventDefault();
-      return this.draw.start(evt.offsetX, evt.offsetY);
+      const x = evt.offsetX;
+      const y = evt.offsetY;
+      this.draw.start(x, y);
+      this.drawHistory.start(x, y);
     },
     onTouchStart(evt) {
       evt.preventDefault();
       let touch = event.touches[0];
       const x = touch.pageX - this._canX;
       const y = touch.pageY - this._canY;
-      return this.draw.start(x, y);
+      this.draw.start(x, y);
+      this.drawHistory.start(x, y);
     },
     onMouseMove(evt) {
       evt.preventDefault();
-      return this.draw.drawTo(evt.offsetX, evt.offsetY);
+      const x = evt.offsetX;
+      const y = evt.offsetY;
+      this.draw.drawTo(x, y);
+      this.drawHistory.drawTo(x, y);
     },
     onTouchMove(evt) {
       evt.preventDefault();
       let touch = event.touches[0];
       const x = touch.pageX - this._canX;
       const y = touch.pageY - this._canY;
-      return this.draw.drawTo(x, y);
+      this.draw.drawTo(x, y);
+      this.drawHistory.drawTo(x, y);
     },
     onMouseUp() {
-      return this.draw.end();
+      this.draw.end();
+      this.drawHistory.end();
     },
     onTouchEnd() {
-      return this.draw.end();
+      this.draw.end();
+      this.drawHistory.end();
     },
     selectLineWidth(width) {
       console.log("selectLineWidth", width);
       this.lineWidth = width;
-      return this.draw.setLineWidth(width);
+      this.draw.setLineWidth(width);
+      this.drawHistory.setLineWidth(width);
     }
   }
 };
