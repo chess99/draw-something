@@ -31,3 +31,10 @@ export function saveAsPNG(fileName, img) {
   });
   aLink.dispatchEvent(evt);
 }
+
+export function getEvtPagePoint(evt) {
+  let item = isTouchDevice() ? evt.touches[0] : evt
+  const x = item.pageX;
+  const y = item.pageY;
+  return { x, y }
+}

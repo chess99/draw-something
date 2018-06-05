@@ -32,17 +32,18 @@ class DrawHistory {
   }
 
   end() {
-    if (this.strokeIndex !== this.strokeHistory.length - 1) {
-      this.strokeHistory[this.strokeIndex] = this.currStroke
-    } else {
-      this.strokeHistory.push(this.currStroke)
+    if (this.strokeIndex !== this.strokeHistory.length) {
+      // delete undo record behind strokeIndex
+      this.strokeHistory = this.strokeHistory.slice(0, this.strokeIndex)
     }
-    this.currStroke = []
+    this.strokeHistory.push(this.currStroke)
     this.strokeIndex += 1
+    this.currStroke = []
     this.printInfo()
   }
 
   get history() {
+    // [0,strokeIndex)
     return this.strokeHistory.slice(0, this.strokeIndex)
   }
 

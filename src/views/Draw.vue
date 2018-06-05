@@ -1,95 +1,127 @@
 <template>
-<div>
+<div class="app-container">
+  <div class="canvas-container">
     <canvas 
     id="canvas"
     :width="canvasWidth" 
     :height="canvasHeight"
-    @mousedown="onMouseDown"
-    @mousemove="onMouseMove"
-    @mouseup="onMouseUp"
-    @touchstart="onTouchStart" 
-    @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
+    @mousedown="drawStart"
+    @mousemove="drawTo"
+    @mouseup="drawEnd"
+    @touchstart="drawStart" 
+    @touchmove="drawTo"
+    @touchend="drawEnd"
     >
     </canvas>
+  </div>
 
-    <div class="ctl-row">
-      <button @click="clear">clear</button>
-      <button @click="undo">undo</button>
-      <button @click="redo">redo</button>
-      <button @click="save">save</button>
-    </div>
-
-    <div class="ctl-row">
-      <div v-for="item in lineWidths" :key="item" class="width-example-box" :class="{active:item==lineWidth}" @click.capture.prevent="selectLineWidth(item)">
+    <flexbox>
+      <flexbox-item>
+        <x-button plain mini @click.native="save">save</x-button>
+      </flexbox-item>
+      <flexbox-item>
+        <x-button plain mini @click.native="showClearConfirm=true">clear</x-button>
+      </flexbox-item>
+      <flexbox-item>
+        <x-button plain mini @click.native="redo">redo</x-button>
+      </flexbox-item>
+      <flexbox-item>
+        <x-button plain mini @click.native="undo">undo</x-button>
+      </flexbox-item>
+    </flexbox>
+    
+    <flexbox class="ctl-row">
+      <flexbox-item v-for="item in lineWidths" :key="item" class="width-example-box" :class="{active:item==lineWidth}" @click.native="selectLineWidth(item)">
         <span :class="'width-example-'+item"></span>
         <span>{{item}}</span>
-      </div>
-    </div>
+      </flexbox-item>
+    </flexbox>
 
-    <div class="ctl-row">
-      <el-color-picker v-model="brushColor" popper-class="color-picker-popper-class" :predefine="predefineColors"></el-color-picker>
-    </div>
+    <color-picker class="ctl-row" v-for="colorArr in predefineColors" :key="colorArr.key" :colors="colorArr" v-model="brushColor" size="middle"></color-picker>
+
+    <x-dialog v-model="showImgDlg" class="dialog-demo" hide-on-blur>
+      <div class="img-box">
+        <img :src="imgData" style="max-width:100%">
+      </div>
+      <div>
+        <span style="color:#777">长按或右键保存</span>
+      </div>
+    </x-dialog>
+
+    <confirm v-model="showClearConfirm"
+      @on-confirm="clear"
+      >
+      <p style="text-align:center;">确定清除画布?</p>
+    </confirm>
 
 </div>
 </template>
 
 <script>
-import { getOffset, saveAsPNG } from "@/utils/util";
-import { ColorPicker } from "element-ui";
+import { getOffset, getEvtPagePoint, saveAsPNG } from "@/utils/util";
 
 import DrawLine from "@/utils/DrawLine";
 import DrawHistory from "@/utils/DrawHistory";
+
+import {
+  ColorPicker,
+  Group,
+  Cell,
+  Flexbox,
+  FlexboxItem,
+  XButton,
+  XDialog,
+  Confirm
+} from "vux";
 
 export default {
   data() {
     return {
       viewportContentBackup: "",
-      canvasWidth: 340,
+      showImgDlg: false,
+      showClearConfirm: false,
+      imgData: null,
+
+      canvasWidth: 350,
       canvasHeight: 400,
       _ptOffset: 0.5,
       _canX: null,
       _canY: null,
       lineWidths: [2, 4, 6, 10, 18],
       predefineColors: [
-        "#000000",
-        "#ffffff",
-        "#9b9b9b",
-        "#ff4c62",
-        "#fec410",
-        "#fdf902",
-        "#91c601",
-        "#516dfe",
-        "#2ccff5",
-        "#9c7cff",
-        "#00A64C",
-        "#af743f",
-        "#cca86d",
-        "#f0d881",
-        "#ffc4d6",
-        "#ff00b2"
+        ["#fff", "#000", "#9b9b9b", "#ff4c62"],
+        ["#fec410", "#fdf902", "#91c601", "#516dfe"],
+        ["#2ccff5", "#9c7cff", "#00A64C", "#af743f"],
+        ["#cca86d", "#f0d881", "#ffc4d6", "#ff00b2"]
       ],
 
       context: null,
       draw: null,
       drawHistory: null,
+
+      drawing: false,
       lineWidth: 2,
       brushColor: "#000"
     };
   },
-  computed: {
-    imgData() {
-      let canvas = document.getElementById("canvas");
-      console.log(canvas);
-    }
-  },
+  computed: {},
   components: {
-    [ColorPicker.name]: ColorPicker
+    ColorPicker,
+    Group,
+    Cell,
+    Flexbox,
+    FlexboxItem,
+    XButton,
+    XDialog,
+    Confirm
   },
   created() {
     let viewport = document.querySelector("meta[name=viewport]");
     this.viewportContentBackup = viewport.getAttribute("content");
-    viewport.setAttribute("content", "width=360, user-scalable=no");
+    viewport.setAttribute(
+      "content",
+      "width=device-width,initial-scale=1.0,user-scalable=0"
+    );
   },
   beforeDestroy() {
     let viewport = document.querySelector("meta[name=viewport]");
@@ -149,49 +181,51 @@ export default {
     },
     save() {
       console.log("save");
-      var canvas = document.getElementById("canvas");
-      // Canvas2Image.saveAsPNG(canvas, this.canvasWidth, this.canvasHeight);
-      var img = canvas.toDataURL("image/png");
-      saveAsPNG("download.png", img);
+      const canvas = document.getElementById("canvas");
+      const img = canvas.toDataURL("image/png");
+      // saveAsPNG("download.png", img);
+      this.imgData = img;
+      this.showImgDlg = true;
     },
-    onMouseDown(evt) {
+
+    isPointInCanvasArea(x, y) {
+      return (
+        x >= 0 && x <= this.canvasWidth && y >= 0 && y <= this.canvasHeight
+      );
+    },
+    drawStart(evt) {
       evt.preventDefault();
-      const x = evt.offsetX;
-      const y = evt.offsetY;
+      let p = getEvtPagePoint(evt);
+      let x = p.x - this._canX;
+      let y = p.y - this._canY;
+
+      if (!this.isPointInCanvasArea(x, y)) {
+        return;
+      }
+      this.drawing = true;
       this.draw.start(x, y);
       this.drawHistory.start(x, y);
     },
-    onTouchStart(evt) {
+    drawTo(evt) {
       evt.preventDefault();
-      let touch = event.touches[0];
-      const x = touch.pageX - this._canX;
-      const y = touch.pageY - this._canY;
-      this.draw.start(x, y);
-      this.drawHistory.start(x, y);
-    },
-    onMouseMove(evt) {
-      evt.preventDefault();
-      const x = evt.offsetX;
-      const y = evt.offsetY;
+      if (!this.drawing) return;
+      let p = getEvtPagePoint(evt);
+      let x = p.x - this._canX;
+      let y = p.y - this._canY;
+
+      if (!this.isPointInCanvasArea(x, y)) {
+        this.drawEnd();
+        return;
+      }
       this.draw.drawTo(x, y);
       this.drawHistory.drawTo(x, y);
     },
-    onTouchMove(evt) {
-      evt.preventDefault();
-      let touch = event.touches[0];
-      const x = touch.pageX - this._canX;
-      const y = touch.pageY - this._canY;
-      this.draw.drawTo(x, y);
-      this.drawHistory.drawTo(x, y);
-    },
-    onMouseUp() {
+    drawEnd() {
+      this.drawing = false;
       this.draw.end();
       this.drawHistory.end();
     },
-    onTouchEnd() {
-      this.draw.end();
-      this.drawHistory.end();
-    },
+
     selectLineWidth(width) {
       console.log("selectLineWidth", width);
       this.lineWidth = width;
@@ -203,20 +237,29 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.app-container {
+  width: 360px;
+  margin: 0px auto;
+}
+.canvas-container {
+  width: 352px;
+  margin: 0px auto;
+}
 #canvas {
   border: solid 1px black;
   margin: 0 auto;
 }
 .ctl-row {
-  margin: 10px auto;
+  margin: 6px auto;
 }
 .width-example-box {
   display: inline-block;
   background-color: #eee;
   border-radius: 5px;
   width: 3rem;
-  height: 3rem;
-  line-height: 3rem;
+  padding-left: 0.5rem;
+  height: 2.5rem;
+  line-height: 2.5rem;
   vertical-align: center;
   margin: 0px 3px;
   cursor: pointer;
@@ -234,10 +277,7 @@ $lineWidthList: 2 4 6 10 18;
     width: #{$i}px;
     height: #{$i}px;
     border-radius: #{$i/2}px;
+    margin: 0 auto;
   }
-}
-
-.color-picker-popper-class {
-  width: 100%;
 }
 </style>

@@ -13,7 +13,6 @@ class Draw {
     this._canHeight = canvas.height
     this.lastX = -1
     this.lastY = -1
-    this.drawing = false
 
     this.lineWidth = 1
     this.strokeStyle = 'black'
@@ -29,15 +28,9 @@ class Draw {
     this.context.strokeStyle = color;
   }
 
-  isPointInCanvasArea(x, y) {
-    return x >= 0 && x <= this._canWidth && y >= 0 && y <= this._canHeight
-  }
+
 
   _start(x, y) {
-    console.log('start', x, y)
-    if (!this.isPointInCanvasArea(x, y)) return;
-    this.drawing = true;
-
     this.context.beginPath();
     this.context.moveTo(x, y);
     this.context.lineTo(x, y + 0.01);
@@ -53,13 +46,6 @@ class Draw {
   }
 
   drawTo(x, y) {
-    if (!this.drawing) return;
-    console.log('drawTo', x, y)
-
-    if (!this.isPointInCanvasArea(x, y)) {
-      return this.end()
-    }
-
     this.context.beginPath();
     this.context.moveTo(this.lastX, this.lastY);
     this.context.lineTo(x, y);
@@ -69,8 +55,6 @@ class Draw {
   }
 
   end() {
-    console.log('end')
-    this.drawing = false;
   }
 
   drawStoke(stroke) {
