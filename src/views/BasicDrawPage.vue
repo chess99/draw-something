@@ -8,7 +8,7 @@
     @mousedown="drawStart"
     @mousemove="drawTo"
     @mouseup="drawEnd"
-    @touchstart="drawStart" 
+    @touchstart="drawStart"
     @touchmove="drawTo"
     @touchend="drawEnd"
     >
@@ -159,8 +159,6 @@ export default {
     drawEnd(evt) {
       return this.draw.drawEndEvt(evt);
     },
-
-    simulation() {},
 
     selectLineWidth(width) {
       this.draw.selectLineWidth(width);

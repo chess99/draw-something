@@ -1,5 +1,5 @@
 
-class Draw {
+class DrawLine {
   constructor(canvasSelector) {
     let canvas = document.querySelector(canvasSelector)
     this.context = canvas.getContext('2d');
@@ -7,15 +7,15 @@ class Draw {
     this.context.imageSmoothingEnabled = false;
     this.context.lineCap = 'round';
     this.context.lineJoin = 'round';
-    this.context.lineWidth = 1;
+    this.context.lineWidth = 2;
 
     this._canWidth = canvas.width
     this._canHeight = canvas.height
     this.lastX = -1
     this.lastY = -1
 
-    this.lineWidth = 1
-    this.strokeStyle = 'black'
+    this.lineWidth = 2
+    this.strokeStyle = '#000'
   }
 
   setLineWidth(width) {
@@ -27,7 +27,6 @@ class Draw {
     this.strokeStyle = color;
     this.context.strokeStyle = color;
   }
-
 
 
   _start(x, y) {
@@ -77,4 +76,4 @@ class Draw {
 
 }
 
-export default Draw
+export default DrawLine

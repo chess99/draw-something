@@ -5,40 +5,16 @@
     id="canvas"
     :width="canvasWidth" 
     :height="canvasHeight"
-    @mousedown="drawStart"
-    @mousemove="drawTo"
-    @mouseup="drawEnd"
-    @touchstart="drawStart" 
-    @touchmove="drawTo"
-    @touchend="drawEnd"
     >
     </canvas>
   </div>
 
-    <flexbox>
-      <flexbox-item>
+    <flexbox >
+      <flexbox-item >
         <x-button plain mini @click.native="save">save</x-button>
-      </flexbox-item>
-      <flexbox-item>
-        <x-button plain mini @click.native="showClearConfirm=true">clear</x-button>
-      </flexbox-item>
-      <flexbox-item>
-        <x-button plain mini @click.native="redo">redo</x-button>
-      </flexbox-item>
-      <flexbox-item>
-        <x-button plain mini @click.native="undo">undo</x-button>
       </flexbox-item>
     </flexbox>
     
-    <flexbox class="ctl-row">
-      <flexbox-item v-for="item in lineWidths" :key="item" class="width-example-box" :class="{active:item==lineWidth}" @click.native="selectLineWidth(item)">
-        <span :class="'width-example-'+item"></span>
-        <span>{{item}}</span>
-      </flexbox-item>
-    </flexbox>
-
-    <color-picker class="ctl-row" v-for="colorArr in predefineColors" :key="colorArr.key" :colors="colorArr" v-model="brushColor" size="middle"></color-picker>
-
     <x-dialog v-model="showImgDlg" class="dialog-demo" hide-on-blur>
       <div class="img-box">
         <img :src="imgData" style="max-width:100%">
@@ -47,14 +23,6 @@
         <span style="color:#777">长按或右键保存</span>
       </div>
     </x-dialog>
-
-    <confirm 
-      v-model="showClearConfirm"
-      @on-confirm="clear"
-      hide-on-blur
-      >
-      <p style="text-align:center;">确定清除画布?</p>
-    </confirm>
 
 </div>
 </template>
@@ -81,19 +49,9 @@ export default {
 
       canvasWidth: 350,
       canvasHeight: 400,
-      lineWidths: [2, 4, 6, 10, 18],
-      predefineColors: [
-        ["#fff", "#000", "#9b9b9b", "#ff4c62"],
-        ["#fec410", "#fdf902", "#91c601", "#516dfe"],
-        ["#2ccff5", "#9c7cff", "#00A64C", "#af743f"],
-        ["#cca86d", "#f0d881", "#ffc4d6", "#ff00b2"]
-      ],
 
       context: null,
-      draw: null,
-
-      lineWidth: 2,
-      brushColor: "#000"
+      draw: null
     };
   },
   computed: {},
@@ -133,38 +91,12 @@ export default {
     this.draw.clearCanvas();
   },
   methods: {
-    clear() {
-      return this.draw.clear();
-    },
-    undo() {
-      return this.draw.undo();
-    },
-    redo() {
-      return this.draw.redo();
-    },
     save() {
       // console.log("save");
       const canvas = document.getElementById("canvas");
       const img = canvas.toDataURL("image/png");
       this.imgData = img;
       this.showImgDlg = true;
-    },
-
-    drawStart(evt) {
-      return this.draw.drawStartEvt(evt);
-    },
-    drawTo(evt) {
-      return this.draw.drawToEvt(evt);
-    },
-    drawEnd(evt) {
-      return this.draw.drawEndEvt(evt);
-    },
-
-    simulation() {},
-
-    selectLineWidth(width) {
-      this.draw.selectLineWidth(width);
-      this.lineWidth = width;
     }
   }
 };

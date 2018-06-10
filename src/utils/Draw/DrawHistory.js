@@ -1,10 +1,9 @@
 class DrawHistory {
   constructor() {
-    this.maxRecord = 5;
     this.strokeIndex = 0; // 此位置为准备写入数据的位置
 
-    this.lineWidth = 1
-    this.strokeStyle = 'black'
+    this.lineWidth = 2
+    this.strokeStyle = '#000'
 
     this.currStroke = []
     this.strokeHistory = []
@@ -28,7 +27,7 @@ class DrawHistory {
   }
 
   printInfo() {
-    console.log(this.strokeHistory.length, this.strokeIndex)
+    // console.log(this.strokeHistory.length, this.strokeIndex)
   }
 
   end() {
