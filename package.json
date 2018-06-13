@@ -10,7 +10,8 @@
     "unit": "jest --config test/unit/jest.conf.js --coverage",
     "test": "npm run unit",
     "lint": "eslint --ext .js,.vue src test/unit/specs",
-    "build": "node build/build.js"
+    "build": "node build/build.js",
+    "start:wsServer": "pm2 start pm2.json"
   },
   "dependencies": {
     "vux": "^2.2.0",
@@ -77,6 +78,7 @@
     "webpack-dev-server": "^2.9.1",
     "webpack-hot-middleware": "^2.16.1",
     "webpack-merge": "^4.1.0",
+    "ws": "^5.2.0",
     "yaml-loader": "^0.4.0"
   },
   "engines": {

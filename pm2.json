@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "name": "draw-something-wsserver",
+      "script": "wsServer.js",
+      "watch": [
+        "wsServer.js"
+      ],
+      "ignore_watch": [
+        "node_modules"
+      ],
+      "log_date_format": "YYYY-MM=DD HH:mm:ss"
+    }
+  ]
+}

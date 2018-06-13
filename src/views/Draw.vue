@@ -61,6 +61,9 @@
 
 <script>
 import Draw from "@/utils/Draw";
+import WsClient from "@/utils/WsClient";
+
+import { evtPointInCanvas } from "@/utils/Draw/util";
 
 import {
   ColorPicker,
@@ -89,8 +92,10 @@ export default {
         ["#cca86d", "#f0d881", "#ffc4d6", "#ff00b2"]
       ],
 
+      canvas: null,
       context: null,
       draw: null,
+      ws: null,
 
       lineWidth: 2,
       brushColor: "#000"
@@ -119,7 +124,7 @@ export default {
   },
   watch: {
     brushColor(val, oldVal) {
-      this.draw.selectBrushColor(val);
+      this.selectBrushColor(val);
     }
   },
   mounted() {
@@ -128,19 +133,29 @@ export default {
       alert("该浏览器不支持<canvas>");
       return;
     }
+    this.canvas = canvas;
 
     this.draw = new Draw("#canvas");
     this.draw.clearCanvas();
+
+    this.ws = new WsClient({
+      host: require("../gameCfg.js").wsHost,
+      port: 44300,
+      playerRole: "painter"
+    });
   },
   methods: {
     clear() {
-      return this.draw.clear();
+      this.draw.clear();
+      this.ws.send({ type: "clear" });
     },
     undo() {
-      return this.draw.undo();
+      this.draw.undo();
+      this.ws.send({ type: "undo" });
     },
     redo() {
-      return this.draw.redo();
+      this.draw.redo();
+      this.ws.send({ type: "redo" });
     },
     save() {
       // console.log("save");
@@ -151,20 +166,32 @@ export default {
     },
 
     drawStart(evt) {
-      return this.draw.drawStartEvt(evt);
+      evt.preventDefault();
+      let p = evtPointInCanvas(evt, this.canvas);
+      this.draw.drawStart(p.x, p.y);
+      this.ws.send({ type: "drawStart", point: { x: p.x, y: p.y } });
     },
     drawTo(evt) {
-      return this.draw.drawToEvt(evt);
+      evt.preventDefault();
+      if (!this.draw.drawing) return;
+      let p = evtPointInCanvas(evt, this.canvas);
+      this.draw.drawTo(p.x, p.y);
+      this.ws.send({ type: "drawTo", point: { x: p.x, y: p.y } });
     },
     drawEnd(evt) {
-      return this.draw.drawEndEvt(evt);
+      evt.preventDefault();
+      this.draw.drawEnd(evt);
+      this.ws.send({ type: "drawEnd" });
     },
-
-    simulation() {},
 
     selectLineWidth(width) {
       this.draw.selectLineWidth(width);
       this.lineWidth = width;
+      this.ws.send({ type: "selectLineWidth", value: width });
+    },
+    selectBrushColor(color) {
+      this.draw.selectBrushColor(color);
+      this.ws.send({ type: "selectBrushColor", value: color });
     }
   }
 };

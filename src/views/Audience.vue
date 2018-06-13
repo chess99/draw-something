@@ -29,6 +29,7 @@
 
 <script>
 import Draw from "@/utils/Draw";
+import WsClient from "@/utils/WsClient";
 
 import {
   ColorPicker,
@@ -51,7 +52,8 @@ export default {
       canvasHeight: 400,
 
       context: null,
-      draw: null
+      draw: null,
+      ws: null
     };
   },
   computed: {},
@@ -89,6 +91,37 @@ export default {
 
     this.draw = new Draw("#canvas");
     this.draw.clearCanvas();
+
+    let ws = new WsClient({
+      host: require("../gameCfg.js").wsHost,
+      port: 44300,
+      playerRole: "audience"
+    });
+    ws.bind("drawStart", msg => {
+      this.draw.drawStart(msg.point.x, msg.point.y);
+    });
+    ws.bind("drawTo", msg => {
+      this.draw.drawTo(msg.point.x, msg.point.y);
+    });
+    ws.bind("drawEnd", msg => {
+      this.draw.drawEnd();
+    });
+    ws.bind("selectLineWidth", msg => {
+      this.draw.selectLineWidth(msg.value);
+    });
+    ws.bind("selectBrushColor", msg => {
+      this.draw.selectBrushColor(msg.value);
+    });
+    ws.bind("undo", msg => {
+      this.draw.undo();
+    });
+    ws.bind("redo", msg => {
+      this.draw.redo();
+    });
+    ws.bind("clear", msg => {
+      this.draw.clear();
+    });
+    this.ws = ws;
   },
   methods: {
     save() {

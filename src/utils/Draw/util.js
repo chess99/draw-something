@@ -24,3 +24,13 @@ export function evtPointInPage(evt) {
   const y = item.pageY;
   return { x, y }
 }
+
+export function evtPointInCanvas(evt, canvasEle) {
+  let _canX = getOffset(canvasEle).left;
+  let _canY = getOffset(canvasEle).top;
+
+  let p = evtPointInPage(evt);
+  let x = p.x - _canX;
+  let y = p.y - _canY;
+  return { x, y }
+}
