@@ -140,7 +140,6 @@ export default {
 
     this.ws = new WsClient({
       host: require("../gameCfg.js").wsHost,
-      port: 44300,
       playerRole: "painter"
     });
   },

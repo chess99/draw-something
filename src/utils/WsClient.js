@@ -4,7 +4,6 @@
 class WsClient {
   constructor(config) {
     this.host = config.host || 'localhost'
-    this.port = config.port || 80
     this.playerRole = config.playerRole || 'audience'
 
     this._conn = null
@@ -16,7 +15,9 @@ class WsClient {
   connect() {
     let that = this
 
-    let url = `ws://${this.host}:${this.port}`
+    let wsType = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    let port = window.location.protocol === 'https:' ? 44301 : 44300
+    let url = `${wsType}://${this.host}:${port}`
     console.log('connect to ', url)
     this._conn = new WebSocket(url);
 
@@ -30,7 +31,7 @@ class WsClient {
     }
     this._conn.onerror = function (evt) {
       console.log("ws error")
-      setTimeout(() => { that.connect() }, 5000)
+      this._conn.close()
     }
     this._conn.onmessage = function (evt) {
       console.log('message : ', evt.data)

@@ -94,7 +94,6 @@ export default {
 
     let ws = new WsClient({
       host: require("../gameCfg.js").wsHost,
-      port: 44300,
       playerRole: "audience"
     });
     ws.bind("drawStart", msg => {
